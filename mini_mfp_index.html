@@ -1,455 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Mini MyFitnessPal — AI Tracker (MVP)</title>
-<style>
-:root{--bg:#f7fbff;--card:#fff;--ink:#0f172a;--muted:#64748b;--brand:#2563eb}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0; background:var(--bg); color:var(--ink)}
-.container{max-width:980px;margin:12px auto;padding:12px}
-.card{background:var(--card);border-radius:14px;padding:12px;margin-bottom:12px;box-shadow:0 8px 20px rgba(0,0,0,0.06)}
-h1{margin:4px 0;font-size:20px}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.col{flex:1 1 200px;min-width:140px}
-label{display:block;font-weight:700;margin:6px 0}
-input,select,button,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid #e6eef8;font-size:15px}
-button{background:var(--brand);color:#fff;border:none;padding:10px;border-radius:10px;cursor:pointer}
-.small{color:var(--muted);font-size:13px}
-.center{text-align:center}
-.kpi{display:flex;gap:8px;flex-wrap:wrap}
-.kpi .card{flex:1 1 160px;text-align:center}
-.meal-list{display:flex;flex-direction:column;gap:8px}
-.meal-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:10px;border:1px solid #eef6ff}
-.tag{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#2563eb;font-weight:700}
-.badge{background:#e6f4ff;padding:6px 10px;border-radius:10px;display:inline-block}
-.camera{background:#081229;color:#e6f4ff;padding:8px;border-radius:10px}
-video,canvas{width:100%;border-radius:10px;background:#000}
-footer{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
-.progress{height:10px;background:#eef5ff;border-radius:8px;overflow:hidden}
-.progress > i{display:block;height:100%;background:#60a5fa;width:0%}
-.flex{display:flex;gap:8px;align-items:center}
-.hidden{display:none}
-</style>
-</head>
-<body>
-<div class="container">
-  <div class="card">
-    <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:56px;height:56px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #2563eb">🏋️‍♂️</div>
-      <div>
-        <h1>Mini MyFitnessPal — AI Tracker (MVP)</h1>
-        <div class="small">نسخة MVP: اختيارات، كاميرا، AI تخمين (MobileNet) و تسجيل محلي.</div>
-      </div>
-    </div>
-  </div>
-
-  <div id="wizard" class="card">
-    <h2>الإعداد السريع</h2>
-    <div class="row">
-      <div class="col">
-        <label>اللغة</label>
-        <select id="lang">
-          <option value="ar" selected>العربية</option>
-          <option value="en">English</option>
-        </select>
-      </div>
-      <div class="col">
-        <label>الجنس</label>
-        <select id="sex"><option value="male">ذكر</option><option value="female">أنثى</option></select>
-      </div>
-      <div class="col">
-        <label>العمر</label>
-        <input type="number" id="age" value="16" min="8" max="99">
-      </div>
-      <div class="col">
-        <label>الطول (سم)</label><input type="number" id="height" value="180" min="100" max="230">
-      </div>
-      <div class="col">
-        <label>الوزن (كجم)</label><input type="number" id="weight" value="75" min="30" max="250">
-      </div>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <div class="col">
-        <label>ايام التمرين / اسبوع</label><input type="number" id="days" value="3" min="0" max="7">
-      </div>
-      <div class="col">
-        <label>الهدف</label>
-        <select id="goal"><option value="maintain">الحفاظ</option><option value="cut">تنشيف</option><option value="bulk">زيادة وزن</option></select>
-      </div>
-      <div class="col center">
-        <label style="visibility:hidden">x</label>
-        <button id="saveProfile">احفظ البيانات</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="dashboard" class="card hidden">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><h2>لوحة المتابعة</h2><div class="small">ملخص اليوم</div></div>
-      <div class="flex"><div class="badge">ستريك: <span id="streak">0</span></div></div>
-    </div>
-
-    <div class="kpi" style="margin-top:8px">
-      <div class="card"><div class="small">سعرات</div><div id="kcal" style="font-weight:800;font-size:18px">0</div><div class="small">الهدف <span id="kcalT">0</span></div><div class="progress"><i id="pK" style="width:0%"></i></div></div>
-      <div class="card"><div class="small">بروتين (جم)</div><div id="prot" style="font-weight:800;font-size:18px">0</div><div class="small">الهدف <span id="protT">0</span></div><div class="progress"><i id="pP" style="width:0%"></i></div></div>
-      <div class="card"><div class="small">دهون (جم)</div><div id="fat" style="font-weight:800;font-size:18px">0</div><div class="small">الهدف <span id="fatT">0</span></div><div class="progress"><i id="pF" style="width:0%"></i></div></div>
-      <div class="card"><div class="small">كاربوهيدرات (جم)</div><div id="carb" style="font-weight:800;font-size:18px">0</div><div class="small">الهدف <span id="carbT">0</span></div><div class="progress"><i id="pC" style="width:0%"></i></div></div>
-    </div>
-
-    <div style="margin-top:12px;display:flex;gap:8px">
-      <button id="openCamera">افتح الكاميرا</button>
-      <button id="openLog" class="ghost">سجل الأكل</button>
-      <button id="openWater" class="ghost">المياه</button>
-      <button id="openWeight" class="ghost">سجل الوزن</button>
-    </div>
-  </div>
-
-  <div id="cameraPage" class="card hidden">
-    <h2>الكاميرا — تخمين الأكل بالـ AI</h2>
-    <div class="camera">
-      <video id="video" autoplay playsinline muted></video>
-      <canvas id="canvas" class="hidden"></canvas>
-      <div style="margin-top:8px;display:flex;gap:8px">
-        <button id="startCam">شغّل الكاميرا</button>
-        <button id="capture" class="ghost">التقط صورة</button>
-        <button id="aiGuess" class="ok">خمن بالـ AI</button>
-      </div>
-      <div id="predictions" style="margin-top:8px"></div>
-      <div class="small" style="margin-top:8px">ملاحظة: للتعرّف الدقيق ضع API Key في الإعدادات (اختياري). الافتراضي: MobileNet (تخمين تقريبي محلي).</div>
-    </div>
-
-    <hr>
-    <h3>أضف يدويًا أو عدّل تخمين الـ AI</h3>
-    <div class="row">
-      <div class="col"><label>الطعام</label><input id="foodName" placeholder="مثال: رز أبيض"></div>
-      <div class="col"><label>الكمية (جم)</label><input id="port" type="number" value="150"></div>
-      <div class="col"><label>نوع الوجبة</label><select id="mealType"><option>فطار</option><option>غداء</option><option>عشاء</option><option>سناك</option></select></div>
-    </div>
-    <div style="margin-top:8px"><button id="addToLog">أضف للسجل</button></div>
-  </div>
-
-  <div id="logPage" class="card hidden">
-    <h2>سجل الأكل — <span id="todayDate"></span></h2>
-    <div id="mealsList" class="meal-list"></div>
-    <hr>
-    <div class="small">المجموعات</div>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <div class="badge">kcal <span id="sumK">0</span></div>
-      <div class="badge">P <span id="sumP">0</span> g</div>
-      <div class="badge">F <span id="sumF">0</span> g</div>
-      <div class="badge">C <span id="sumC">0</span> g</div>
-    </div>
-    <div style="margin-top:8px"><button id="clearDay" class="danger">امسح اليوم</button></div>
-  </div>
-
-  <div id="waterPage" class="card hidden">
-    <h2>متعقّب المياه</h2>
-    <div class="row">
-      <div class="col"><label>الهدف اليومي (مل)</label><input id="wTarget" type="number"></div>
-      <div class="col"><label>حجم الكوب (مل)</label><input id="cupSize" type="number" value="250"></div>
-      <div class="col center"><label style="visibility:hidden">x</label><button id="saveWater">حفظ</button></div>
-    </div>
-    <div style="margin-top:8px">
-      <div class="small">اضغط على رقم الكوب لتسجل الكوب كمشروب</div>
-      <div id="cups" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"></div>
-      <div style="margin-top:8px" class="small">التقدّم <span id="wProgTxt"></span></div>
-      <progress id="wProg" max="100" value="0" style="width:100%"></progress>
-    </div>
-  </div>
-
-  <div id="weightPage" class="card hidden">
-    <h2>سجل الوزن</h2>
-    <div class="row">
-      <div class="col"><label>التاريخ</label><input id="wDate" type="date"></div>
-      <div class="col"><label>الوزن (كجم)</label><input id="wVal" type="number" step="0.1"></div>
-      <div class="col center"><label style="visibility:hidden">x</label><button id="saveWeight">حفظ</button></div>
-    </div>
-    <div id="weightList" style="margin-top:8px"></div>
-  </div>
-
-  <div id="settings" class="card hidden">
-    <h2>الإعدادات / مفتاح الـ AI</h2>
-    <div class="small">للتعرّف الأفضل ادخل مفتاح API (اختياري). لا نرسل المفتاح لأي سيرفر من غير موافقتك.</div>
-    <label>OpenAI API Key</label><input id="openaiKey" placeholder="sk-..." />
-    <label>المصدر</label><select id="aiProvider"><option value="mobilenet">MobileNet (محلي)</option><option value="openai">OpenAI Vision (API)</option></select>
-    <div style="margin-top:8px"><button id="saveSettings">حفظ الإعدادات</button></div>
-  </div>
-
-  <footer class="small">مبني كـ MVP — البيانات محفوظة محليًا على جهازك.</footer>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.12.0/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
-
-<script>
-const SKEY='mfp_mvp_v3';
-let state = JSON.parse(localStorage.getItem(SKEY)||'{}');
-function save(){ localStorage.setItem(SKEY, JSON.stringify(state)); }
-function todayKey(){ return (new Date()).toISOString().slice(0,10); }
-function ensure(){ state.profile = state.profile||null; state.days = state.days||{}; state.settings = state.settings||{}; state.weights = state.weights||[]; save(); }
-ensure();
-
-function hideAllCards(){ document.querySelectorAll('.card').forEach(c=>c.classList.add('hidden')); }
-function showCard(id){ hideAllCards(); document.getElementById(id).classList.remove('hidden'); }
-function showDashboard(){ showCard('dashboard'); refreshDashboard(); }
-
-document.getElementById('saveProfile').addEventListener('click', ()=>{
-  const p = {
-    lang: document.getElementById('lang').value,
-    sex: document.getElementById('sex').value,
-    age: +document.getElementById('age').value,
-    height: +document.getElementById('height').value,
-    weight: +document.getElementById('weight').value,
-    days: +document.getElementById('days').value,
-    goal: document.getElementById('goal').value
-  };
-  state.profile = p; save(); calcGoals(); showDashboard();
-});
-
-function activityFactor(days){
-  if(days<=0) return 1.2;
-  if(days<=2) return 1.375;
-  if(days<=4) return 1.55;
-  if(days<=6) return 1.725;
-  return 1.9;
-}
-function calcTDEE(){
-  const p = state.profile || {weight:70,height:175,age:25,sex:'male',days:3,goal:'maintain'};
-  const w=p.weight,h=p.height,a=p.age,s=p.sex,d=p.days;
-  const bmr = (s==='male')? (10*w + 6.25*h - 5*a + 5) : (10*w + 6.25*h - 5*a -161);
-  let tdee = bmr * activityFactor(d);
-  if(p.goal==='cut') tdee*=0.85;
-  if(p.goal==='bulk') tdee*=1.10;
-  return Math.round(tdee);
-}
-function calcMacrosFromProfile(){
-  const kcal = calcTDEE();
-  const prot = Math.round((state.profile.weight||70) * 1.8);
-  const fat = Math.round((state.profile.weight||70) * 0.9);
-  const carb = Math.max(0, Math.round((kcal - (prot*4 + fat*9))/4));
-  state.goals = {kcal,prot,fat,carb}; save();
-}
-function calcGoals(){ calcMacrosFromProfile(); document.getElementById('kcalT').textContent=state.goals.kcal; document.getElementById('protT').textContent=state.goals.prot; document.getElementById('fatT').textContent=state.goals.fat; document.getElementById('carbT').textContent=state.goals.carb; }
-
-function getDay(d=todayKey()){ state.days[d] = state.days[d]||{meals:[],water:0}; return state.days[d]; }
-function sumDay(d=todayKey()){
-  const dd=getDay(d); return dd.meals.reduce((acc,m)=>{acc.kcal+=m.kcal;acc.prot+=m.prot;acc.fat+=m.fat;acc.carb+=m.carb;return acc},{kcal:0,prot:0,fat:0,carb:0});
-}
-
-const FOODS = [
-{"name":"white rice","ar":"رز أبيض مطبوخ","kcal":130,"prot":2.4,"fat":0.3,"carb":28.7},
-{"name":"grilled chicken breast","ar":"صدر دجاج مشوي","kcal":165,"prot":31,"fat":3.6,"carb":0},
-{"name":"beef steak lean","ar":"ستيك بقري قليل الدهن","kcal":187,"prot":27,"fat":8,"carb":0},
-{"name":"salmon","ar":"سالمون","kcal":208,"prot":20,"fat":13,"carb":0},
-{"name":"eggs","ar":"بيض","kcal":155,"prot":13,"fat":11,"carb":1.1},
-{"name":"banana","ar":"موز","kcal":89,"prot":1.1,"fat":0.3,"carb":23},
-{"name":"apple","ar":"تفاح","kcal":52,"prot":0.3,"fat":0.2,"carb":14},
-{"name":"bread white","ar":"خبز أبيض","kcal":265,"prot":9,"fat":3.2,"carb":49},
-{"name":"pasta cooked","ar":"مكرونة مطبوخة","kcal":131,"prot":5,"fat":1.1,"carb":25},
-{"name":"oats dry","ar":"شوفان","kcal":389,"prot":17,"fat":7,"carb":66},
-{"name":"potato boiled","ar":"بطاطس مسلوقة","kcal":87,"prot":1.9,"fat":0.1,"carb":20},
-{"name":"broccoli","ar":"بروكلي","kcal":34,"prot":2.8,"fat":0.4,"carb":7},
-{"name":"chickpeas boiled","ar":"حمص مسلوق","kcal":164,"prot":9,"fat":2.6,"carb":27},
-{"name":"tuna canned water","ar":"تونة معلبة","kcal":132,"prot":29,"fat":1,"carb":0},
-{"name":"yogurt plain","ar":"زبادي سادة","kcal":59,"prot":10,"fat":0.4,"carb":3.6},
-{"name":"cheddar cheese","ar":"جبنة شيدر","kcal":403,"prot":25,"fat":33,"carb":1.3},
-{"name":"olive oil","ar":"زيت زيتون","kcal":884,"prot":0,"fat":100,"carb":0},
-{"name":"pizza margherita","ar":"بيتزا","kcal":266,"prot":11,"fat":10,"carb":33},
-{"name":"shawarma chicken","ar":"شاورما دجاج","kcal":215,"prot":18,"fat":10,"carb":15},
-{"name":"koshary","ar":"كشري","kcal":164,"prot":5,"fat":3,"carb":30},
-{"name":"falafel","ar":"طعمية","kcal":333,"prot":13,"fat":17,"carb":31},
-{"name":"burger patty beef","ar":"برجر بقري","kcal":250,"prot":17,"fat":20,"carb":0},
-{"name":"fries","ar":"بطاطس مقلية","kcal":312,"prot":3.4,"fat":15,"carb":41},
-{"name":"white pita","ar":"عيش بلدي","kcal":275,"prot":9,"fat":1.2,"carb":55},
-{"name":"lentils cooked","ar":"عدس مطبوخ","kcal":116,"prot":9,"fat":0.4,"carb":20},
-{"name":"quinoa cooked","ar":"كينوا مطبوخة","kcal":120,"prot":4.4,"fat":1.9,"carb":21.3},
-{"name":"sushi (avg)","ar":"سوشي","kcal":145,"prot":9,"fat":4,"carb":20},
-{"name":"rice pudding","ar":"رز بلبن","kcal":118,"prot":3.6,"fat":2.6,"carb":20},
-{"name":"ice cream","ar":"آيس كريم","kcal":207,"prot":3.5,"fat":11,"carb":24},
-{"name":"dark chocolate 70%","ar":"شوكولاتة داكنة","kcal":600,"prot":7.8,"fat":43,"carb":46},
-{"name":"orange juice","ar":"عصير برتقال","kcal":45,"prot":0.7,"fat":0.2,"carb":10.4},
-{"name":"protein powder whey","ar":"بروتين واي","kcal":400,"prot":80,"fat":7,"carb":8},
-{"name":"bulgur cooked","ar":"برغل مطبوخ","kcal":83,"prot":3.1,"fat":0.2,"carb":18.6},
-{"name":"couscous cooked","ar":"كسكسي مطبوخ","kcal":112,"prot":3.8,"fat":0.2,"carb":23},
-{"name":"feta cheese","ar":"جبنة فيتا","kcal":264,"prot":14,"fat":21,"carb":4},
-{"name":"halloumi","ar":"حلومي","kcal":321,"prot":22,"fat":26,"carb":2},
-{"name":"sardines","ar":"سردين","kcal":208,"prot":24,"fat":11,"carb":0},
-{"name":"shrimp","ar":"جمبري","kcal":99,"prot":24,"fat":0.3,"carb":0.2},
-{"name":"almonds","ar":"لوز","kcal":579,"prot":21,"fat":50,"carb":22},
-{"name":"walnuts","ar":"جوز","kcal":654,"prot":15,"fat":65,"carb":14},
-{"name":"peanut butter","ar":"زبدة فول سوداني","kcal":588,"prot":25,"fat":50,"carb":20},
-{"name":"tahini","ar":"طحينة","kcal":595,"prot":17,"fat":53,"carb":21},
-{"name":"feta salad","ar":"سلطة طحينة","kcal":220,"prot":6,"fat":19,"carb":8},
-{"name":"manakish zaatar","ar":"مناقيش زعتر","kcal":300,"prot":9,"fat":13,"carb":38},
-{"name":"molokhia","ar":"ملوخية","kcal":36,"prot":3,"fat":1,"carb":6},
-{"name":"baklava","ar":"بقلاوة","kcal":430,"prot":6,"fat":27,"carb":42}
-];
-
-document.getElementById('addToLog').addEventListener('click', ()=>{
-  const name = document.getElementById('foodName').value.trim();
-  const grams = +document.getElementById('port').value;
-  const meal = document.getElementById('mealType').value;
-  if(!name || grams<=0) return alert('ادخل الأكل والكمية');
-  const f = findFood(name) || {name, kcal:0,prot:0,fat:0,carb:0};
-  const ratio = grams/100;
-  const entry = {name: f.name, grams, meal, kcal: +(f.kcal*ratio).toFixed(1), prot: +(f.prot*ratio).toFixed(1), fat: +(f.fat*ratio).toFixed(1), carb: +(f.carb*ratio).toFixed(1)};
-  getDay().meals.push(entry);
-  save(); refreshLog(); refreshDashboard(); document.getElementById('foodName').value='';
-});
-
-function findFood(q){
-  q = q.toLowerCase();
-  let f = FOODS.find(x=> x.name.toLowerCase()===q || (x.ar && x.ar.toLowerCase()===q));
-  if(f) return f;
-  f = FOODS.find(x=> x.name.toLowerCase().includes(q) || (x.ar && x.ar.toLowerCase().includes(q)));
-  return f || null;
-}
-
-function refreshDashboard(){
-  calcGoals();
-  const s = sumDay();
-  document.getElementById('kcal').textContent = Math.round(s.kcal);
-  document.getElementById('prot').textContent = Math.round(s.prot);
-  document.getElementById('fat').textContent = Math.round(s.fat);
-  document.getElementById('carb').textContent = Math.round(s.carb);
-  document.getElementById('kcalT').textContent = state.goals.kcal;
-  document.getElementById('protT').textContent = state.goals.prot;
-  document.getElementById('fatT').textContent = state.goals.fat;
-  document.getElementById('carbT').textContent = state.goals.carb;
-  document.getElementById('pK').style.width = Math.min(100, (s.kcal/state.goals.kcal)*100)+'%';
-  document.getElementById('pP').style.width = Math.min(100, (s.prot/state.goals.prot)*100)+'%';
-  document.getElementById('pF').style.width = Math.min(100, (s.fat/state.goals.fat)*100)+'%';
-  document.getElementById('pC').style.width = Math.min(100, (s.carb/state.goals.carb)*100)+'%';
-  updateStreak();
-}
-
-function refreshLog(){
-  document.getElementById('todayDate').textContent = todayKey();
-  const list = getDay().meals;
-  const container = document.getElementById('mealsList'); container.innerHTML='';
-  let sums = {kcal:0,prot:0,fat:0,carb:0};
-  list.forEach((m,i)=>{
-    sums.kcal+=m.kcal; sums.prot+=m.prot; sums.fat+=m.fat; sums.carb+=m.carb;
-    const el = document.createElement('div'); el.className='meal-item';
-    el.innerHTML = `<div><strong>${m.name}</strong><div class="small">${m.meal} • ${m.grams}g</div></div><div><div>${m.kcal} kcal</div><div style="margin-top:6px"><button data-i="${i}" class="ghost">حذف</button></div></div>`;
-    container.appendChild(el);
-    el.querySelector('button').onclick = ()=>{ getDay().meals.splice(i,1); save(); refreshLog(); refreshDashboard(); };
-  });
-  document.getElementById('sumK').textContent = Math.round(sums.kcal);
-  document.getElementById('sumP').textContent = Math.round(sums.prot);
-  document.getElementById('sumF').textContent = Math.round(sums.fat);
-  document.getElementById('sumC').textContent = Math.round(sums.carb);
-}
-
-document.getElementById('clearDay').addEventListener('click', ()=>{ state.days[todayKey()].meals=[]; save(); refreshLog(); refreshDashboard(); });
-
-document.getElementById('saveWater').addEventListener('click', ()=>{
-  state.settings.wTarget = +document.getElementById('wTarget').value; state.settings.cup = +document.getElementById('cupSize').value; save(); refreshWater();
-});
-function refreshWater(){
-  const d = getDay();
-  const target = state.settings.wTarget || Math.round((state.profile?.weight||70)*35);
-  const cup = state.settings.cup || 250;
-  const cups = Math.max(1, Math.round(target/cup));
-  const cont = document.getElementById('cups'); cont.innerHTML='';
-  for(let i=0;i<cups;i++){
-    const el = document.createElement('div'); el.className='tag'; el.textContent = (i+1);
-    if(i < Math.floor(d.water/cup)) el.style.background='#a7f3d0';
-    el.onclick = ()=>{ d.water = Math.min(target, d.water+cup); save(); refreshWater(); refreshDashboard(); };
-    cont.appendChild(el);
-  }
-  document.getElementById('wProgTxt').textContent = `${d.water||0} / ${target} ml`;
-  document.getElementById('wProg').value = Math.min(100, ((d.water||0)/target)*100);
-  document.getElementById('wTarget').value = target; document.getElementById('cupSize').value=cup;
-}
-
-document.getElementById('saveWeight').addEventListener('click', ()=>{
-  const d = document.getElementById('wDate').value || todayKey();
-  const w = +document.getElementById('wVal').value;
-  if(!w) return alert('ادخل الوزن');
-  state.weights.push({d,w}); save(); renderWeights();
-});
-function renderWeights(){
-  const el = document.getElementById('weightList'); el.innerHTML='';
-  state.weights.slice().reverse().forEach(x=>{ const r = document.createElement('div'); r.className='tag'; r.textContent = `${x.d} • ${x.w} kg`; el.appendChild(r); });
-}
-
-function updateStreak(){
-  const g = state.goals || {kcal:2000,prot:120,fat:70,carb:200};
-  const s = sumDay();
-  const waterOk = (getDay().water || 0) >= ( (state.settings.wTarget || Math.round((state.profile?.weight||70)*35))*0.9 );
-  const kcalOk = Math.abs(s.kcal - g.kcal) <= g.kcal*0.1;
-  const protOk = s.prot >= g.prot*0.9;
-  const hit = waterOk && kcalOk && protOk;
-  state.streaks = state.streaks||{count:0,last:null};
-  const today = todayKey();
-  if(hit && state.streaks.last !== today){
-    const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
-    if(state.streaks.last === yesterday) state.streaks.count = (state.streaks.count||0) + 1;
-    else state.streaks.count = 1;
-    state.streaks.last = today;
-    save();
-  }
-  document.getElementById('streak').textContent = state.streaks.count||0;
-}
-
-async function startCamera(){
-  try{
-    const s = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-    document.getElementById('video').srcObject = s; await document.getElementById('video').play();
-  }catch(e){ alert('صلاحية الكاميرا مرفوضة أو غير متاحة. شغل عبر HTTPS / GitHub Pages.'); }
-}
-document.getElementById('startCam').addEventListener('click', startCamera);
-document.getElementById('capture').addEventListener('click', ()=>{
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  if(!video.videoWidth) return alert('شغل الكاميرا أولاً');
-  canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video,0,0);
-  canvas.classList.remove('hidden');
-});
-
-let model = null;
-async function loadMobileNet(){ if(!model){ model = await mobilenet.load(); } }
-document.getElementById('aiGuess').addEventListener('click', async ()=>{
-  const provider = state.settings.provider || 'mobilenet';
-  const key = state.settings.openaiKey;
-  const predsDiv = document.getElementById('predictions'); predsDiv.innerHTML = 'جاري التحليل...';
-  const canvas = document.getElementById('canvas');
-  if(!canvas.width){ return alert('التقط صورة أولا'); }
-  if(provider === 'openai' && key){
-    predsDiv.innerHTML = 'OpenAI call placeholder (requires server proxy for key)';
-    return;
-  }
-  try{
-    predsDiv.innerHTML=''; await loadMobileNet();
-    const results = await model.classify(canvas);
-    results.slice(0,5).forEach(r=>{
-      const t = document.createElement('div'); t.className='tag'; t.textContent = `${r.className} (${(r.probability*100).toFixed(1)}%)`;
-      t.onclick = ()=>{ const key = r.className.split(',')[0].toLowerCase(); const guess = findFood(key.split(' ').slice(-1)[0]) || findFood(key) || FOODS[0]; document.getElementById('foodName').value = guess.name; document.getElementById('port').value = 150; };
-      predsDiv.appendChild(t);
-    });
-  }catch(err){ predsDiv.innerHTML = 'Model error: '+err.message; }
-});
-
-document.getElementById('openCamera').onclick = ()=> showCard('cameraPage');
-document.getElementById('openLog').onclick = ()=> { showCard('logPage'); refreshLog(); };
-document.getElementById('openWater').onclick = ()=> { showCard('waterPage'); refreshWater(); };
-document.getElementById('openWeight').onclick = ()=> { showCard('weightPage'); renderWeights(); };
-document.getElementById('saveSettings').addEventListener('click', ()=>{ state.settings.openaiKey = document.getElementById('openaiKey').value.trim(); state.settings.provider = document.getElementById('aiProvider').value; save(); alert('تم الحفظ محليًا'); });
-
-window.addEventListener('load', async ()=>{
-  ensure();
-  if(!state.profile){ showCard('wizard'); } else { showDashboard(); }
-  document.getElementById('openaiKey').value = state.settings.openaiKey || '';
-  document.getElementById('aiProvider').value = state.settings.provider || 'mobilenet';
-  document.getElementById('wTarget').value = state.settings.wTarget || Math.round((state.profile?.weight||70)*35);
-  document.getElementById('cupSize').value = state.settings.cup || 250;
-  renderWeights(); refreshDashboard();
-});
-
-function getDay(d=todayKey()){ state.days[d] = state.days[d]||{meals:[],water:0}; return state.days[d]; }
-function sumDay(d=todayKey()){ const dd=getDay(d); return dd.meals.reduce((acc,m)=>{acc.kcal+=m.kcal;acc.prot+=m.prot;acc.fat+=m.fat;acc.carb+=m.carb;return acc},{kcal:0,prot:0,fat:0,carb:0}); }
-</script>
-</body>
-</html>
